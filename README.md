@@ -20,6 +20,16 @@ MedView is the deliberate next step. Instead of another isolated model experimen
 
 The hosted demo runs entirely in the browser using synthetic data. It demonstrates navigation, window/level, segmentation overlay, paint/erase correction, measurements, and metadata export. DICOM/NIfTI file IO, the native C++ processing boundary, and NIfTI mask export run in the local application because those capabilities require the full backend and native build.
 
+### Public demo: 60-second workflow
+
+1. Select **Load synthetic study** to create the patient-free sample volume.
+2. Browse axial, sagittal, and coronal slices; adjust window/level if desired.
+3. Select **Run deterministic demo** to add the teal segmentation overlay.
+4. Choose **Paint**, **Erase**, or **Measure**, then drag directly on a view.
+5. Select **Export demo metadata** to download the transparent JSON record.
+
+The interface keeps later controls disabled until their prerequisite step is complete and shows the next action in the Quick Start bar.
+
 ## What works
 
 - Validated 3D NIfTI (`.nii`, `.nii.gz`) and multi-file DICOM series loading, with dimensional, series, slice-shape, finite-value, and upload-size checks
