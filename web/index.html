@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MedView Workstation</title><link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header><div class="brand"><span class="mark">MV</span><div><b>MedView</b><small>IMAGING REVIEW WORKSTATION</small></div></div><div class="notice">EDUCATIONAL USE ONLY · NOT FOR DIAGNOSIS</div><div id="system" class="status">● READY</div></header>
+  <main>
+    <aside class="left panel">
+      <section><h2>STUDY</h2><button id="demo" class="primary">Load synthetic study</button><label class="file">Open NIfTI<input id="nifti" type="file" accept=".nii,.nii.gz"></label><label class="file">Open DICOM series<input id="dicom" type="file" multiple accept=".dcm,application/dicom"></label><div id="drop">Drop NIfTI here</div></section>
+      <section id="study"><h2>STUDY DETAILS</h2><div class="empty">No study loaded</div></section>
+      <section><h2>WINDOW / LEVEL</h2><label>Window <output id="windowOut">400</output><input id="window" type="range" min="1" max="2000" value="400"></label><label>Level <output id="levelOut">40</output><input id="level" type="range" min="-1000" max="1000" value="40"></label><div class="preset"><button data-wl="400,40">Soft tissue</button><button data-wl="1500,-600">Lung</button><button data-wl="1800,400">Bone</button></div></section>
+    </aside>
+    <section class="workspace">
+      <div id="message" class="message">Load the included synthetic study or a validated NIfTI / DICOM series.</div>
+      <div class="views">
+        <figure data-plane="axial"><figcaption>AXIAL <span class="coord"></span></figcaption><div class="viewport"><img alt="Axial slice"><canvas></canvas><span class="orientation top">A</span><span class="orientation left">R</span></div><input class="slice" type="range" min="0" max="1"></figure>
+        <figure data-plane="sagittal"><figcaption>SAGITTAL <span class="coord"></span></figcaption><div class="viewport"><img alt="Sagittal slice"><canvas></canvas><span class="orientation top">S</span><span class="orientation left">A</span></div><input class="slice" type="range" min="0" max="1"></figure>
+        <figure data-plane="coronal"><figcaption>CORONAL <span class="coord"></span></figcaption><div class="viewport"><img alt="Coronal slice"><canvas></canvas><span class="orientation top">S</span><span class="orientation left">R</span></div><input class="slice" type="range" min="0" max="1"></figure>
+      </div>
+      <footer>Wheel: slices · Drag: pan · Scroll/+/−: zoom · Edit mode: draw mask · Measure: drag ruler</footer>
+    </section>
+    <aside class="right panel">
+      <section><h2>SEGMENTATION</h2><button id="infer" class="primary" disabled>Run deterministic demo</button><div class="tools"><button data-mode="pan" class="active">Pan</button><button data-mode="paint">Paint</button><button data-mode="erase">Erase</button><button data-mode="measure">Measure</button></div><label>Brush radius <output id="brushOut">6</output> px<input id="brush" type="range" min="1" max="25" value="6"></label><button id="clear" disabled>Clear mask</button></section>
+      <section><h2>MASK METRICS <span class="cpp">C++ CORE</span></h2><dl><dt>Voxels</dt><dd id="voxels">—</dd><dt>Volume</dt><dd id="volume">—</dd><dt>Compute</dt><dd id="backend">—</dd></dl></section>
+      <section><h2>MEASUREMENT</h2><div id="measurement" class="empty">Select Measure, then drag across a view.</div></section>
+      <section><h2>EXPORT</h2><button id="export" disabled>Export NIfTI mask + JSON</button><p class="fine">Exports label data and traceable metadata. No source pixels are included.</p></section>
+    </aside>
+  </main><script src="/static/app.js"></script>
+</body></html>
+
