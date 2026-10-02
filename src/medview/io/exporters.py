@@ -10,7 +10,14 @@ import numpy as np
 from medview.models import Volume
 
 
-def export_mask(volume: Volume, output_dir: Path, stem: str = "medview_mask") -> tuple[Path, Path]:
+def export_mask(
+    volume: Volume,
+    output_dir: Path,
+    stem: str = "medview_mask",
+    *,
+    audit_events: list[dict[str, object]] | None = None,
+    provenance: dict[str, object] | None = None,
+) -> tuple[Path, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     mask_path = output_dir / f"{stem}.nii.gz"
     metadata_path = output_dir / f"{stem}.json"
@@ -27,6 +34,8 @@ def export_mask(volume: Volume, output_dir: Path, stem: str = "medview_mask") ->
             "labels": {"0": "background", "1": "demo region"},
             "voxel_count": int(volume.mask.sum()),
         },
+        "algorithm_provenance": provenance or {"type": "manual-only", "clinical_model": False},
+        "audit_trail": audit_events or [],
     }
     metadata_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return mask_path, metadata_path

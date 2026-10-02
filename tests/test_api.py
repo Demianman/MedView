@@ -28,6 +28,8 @@ def test_demo_inference_edit_export_flow():
         json={"plane": "axial", "index": 40, "u": 0.5, "v": 0.5, "radius": 3, "value": 0},
     )
     assert painted.status_code == 200
+    assert client.post("/api/undo").status_code == 200
+    assert client.post("/api/redo").status_code == 200
     exported = client.get("/api/export")
     assert exported.status_code == 200
     assert exported.content.startswith(b"PK")

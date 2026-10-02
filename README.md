@@ -18,25 +18,26 @@ My earlier medical-imaging work was organized as independent projects: each proj
 
 MedView is the deliberate next step. Instead of another isolated model experiment, it focuses on the software around imaging AI: validated inputs, spatial metadata, tri-planar review, deterministic and pluggable inference, human correction, physical measurements, traceable export, and verification. The public website gives students, engineers, and reviewers a zero-install way to understand that workflow. The full repository remains the source of truth for the Python/C++ implementation.
 
-The hosted demo runs entirely in the browser using synthetic data. It demonstrates navigation, window/level, segmentation overlay, paint/erase correction, measurements, and metadata export. DICOM/NIfTI file IO, the native C++ processing boundary, and NIfTI mask export run in the local application because those capabilities require the full backend and native build.
+The hosted demo runs entirely in the browser using synthetic data. It demonstrates navigation, window/level, segmentation overlay, paint/erase correction, undo/redo, measurements, and metadata export with algorithm provenance and an action trail. DICOM/NIfTI file IO, the native C++ processing boundary, and NIfTI mask export run in the local application because those capabilities require the full backend and native build.
 
 ### Public demo: 60-second workflow
 
 1. Select **Load synthetic study** to create the patient-free sample volume.
 2. Browse axial, sagittal, and coronal slices; adjust window/level if desired.
 3. Select **Run deterministic demo** to add the teal segmentation overlay.
-4. Choose **Paint**, **Erase**, or **Measure**, then drag directly on a view.
-5. Select **Export demo metadata** to download the transparent JSON record.
+4. Choose **Paint**, **Erase**, or **Measure**, then drag directly on a view; use **Undo/Redo** to review corrections.
+5. Select **Export demo metadata** to download the provenance and action record.
 
 The interface keeps later controls disabled until their prerequisite step is complete and shows the next action in the Quick Start bar.
 
 ## What works
 
 - Validated 3D NIfTI (`.nii`, `.nii.gz`) and multi-file DICOM series loading, with dimensional, series, slice-shape, finite-value, and upload-size checks
+- Patient-coordinate DICOM reconstruction from orientation/position tags, geometric slice ordering, regular-spacing checks, and an explicit fallback warning when geometry tags are unavailable
 - Linked axial, sagittal, and coronal slice viewers with wheel navigation, zoom, pan, orientation labels, and configurable window/level presets
-- Teal segmentation overlay, deterministic percentile-based demo inference, and brush-based paint/erase correction
+- Teal segmentation overlay, deterministic percentile-based demo inference, brush-based paint/erase correction, and bounded undo/redo history
 - Interactive distance ruler and physical mask volume/bounds measurements
-- NIfTI label-map + JSON metadata export in a ZIP archive
+- NIfTI label-map + JSON metadata export in a ZIP archive, including algorithm provenance and an in-session audit trail
 - Explicit empty, loading, invalid-file, and success messages; structured server logs and user-safe errors
 - Deterministic synthetic CT-like phantom generator for a zero-sensitive-data demo
 
@@ -86,8 +87,8 @@ The UI is served in a browser, so the container needs no GUI forwarding. Local d
 ## DICOM and NIfTI handling
 
 - NIfTI affine and voxel spacing are preserved in exported masks.
-- DICOM slices are restricted to one `SeriesInstanceUID`, checked for consistent rows/columns, ordered by `SliceLocation` or `InstanceNumber`, and rescaled with slope/intercept.
-- The MVP constructs a spacing-based affine for DICOM. Full patient-coordinate reconstruction from `ImageOrientationPatient` and `ImagePositionPatient` is future work.
+- DICOM slices are restricted to one `SeriesInstanceUID`, checked for consistent rows/columns and orientation, ordered geometrically along the slice normal, checked for regular spacing, and rescaled with slope/intercept.
+- When `ImageOrientationPatient`, `ImagePositionPatient`, and `PixelSpacing` are present, MedView builds a patient-coordinate affine. Legacy files without geometry tags use a spacing-only affine and receive an explicit metadata warning.
 - Uploads are processed in temporary storage, capped at 256 MB, and not retained by the application.
 - The loader accepts only 3D volumes; time series and enhanced/multiframe DICOM are outside MVP scope.
 
@@ -102,9 +103,9 @@ make verify
 The suite includes:
 
 - C++ unit tests for thresholding, voxel counts, physical volume, bounds, empty/invalid inputs
-- Python unit tests for tri-planar transforms, rendering, mask painting/erasing, and validation failures
-- An integration test covering synthetic generation → load → native processing → NIfTI/JSON export and data equality
-- API workflow tests covering empty/invalid states, slice rendering, inference, edit, and ZIP export
+- Python unit tests for tri-planar transforms, rendering, mask painting/erasing, DICOM geometry reconstruction, history behavior, and validation failures
+- An integration test covering synthetic generation → load → native processing → NIfTI/JSON export, provenance/audit serialization, and data equality
+- API workflow tests covering empty/invalid states, slice rendering, inference, edit, undo/redo, and ZIP export
 - Ruff linting and strict mypy checks
 - GitHub Actions across macOS/Linux and Python 3.11/3.13
 
@@ -115,7 +116,7 @@ This is an engineering verification strategy, not clinical validation. There are
 - **Web UI over Qt/VTK:** reliable cross-platform demo and testable HTTP boundary; it does not yet provide GPU volume rendering or native PACS integration.
 - **C ABI over pybind11:** a tiny, inspectable ownership boundary with no compiler-specific Python extension packaging; array contiguity is validated/corrected before calls.
 - **Deterministic threshold demo over trained model:** reproducible, fast, explainable, and honest. `SegmentationProvider` is the seam for a separately validated model.
-- **Single in-memory study:** keeps the MVP clear. Authentication, multi-user isolation, durable audit logs, DICOMweb, and long-running job orchestration are intentionally absent.
+- **In-memory history and audit trail:** makes editing actions reviewable and exportable without implying regulated electronic records. Authentication, multi-user isolation, durable/tamper-evident audit storage, DICOMweb, and long-running job orchestration remain intentionally absent.
 
 ## Repository map
 
@@ -132,7 +133,7 @@ tests/               Python unit, API, and integration tests
 
 ## Future work
 
-Patient-coordinate DICOM geometry; oblique/multiframe support; connected-component editing; undo/redo and annotation audit trail; GPU rendering; DICOM SEG/SR export; DICOMweb/PACS integration; model provenance and formal hazard-linked requirements. Any clinical use would additionally require a quality system, risk management, cybersecurity work, usability engineering, and appropriately designed verification and validation.
+Oblique and enhanced/multiframe DICOM support; connected-component editing; GPU rendering; DICOM SEG/SR export; DICOMweb/PACS integration; durable/tamper-evident audit storage; richer model cards; and formal hazard-linked requirements. Any clinical use would additionally require a quality system, risk management, cybersecurity work, usability engineering, and appropriately designed verification and validation.
 
 ## License
 

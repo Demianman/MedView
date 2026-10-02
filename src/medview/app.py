@@ -15,7 +15,7 @@ from medview.demo import generate_synthetic_volume
 from medview.inference import DeterministicThresholdSegmenter
 from medview.io import export_mask, load_dicom_series, load_nifti, load_uploaded_nifti
 from medview.models import MedViewError, ViewPlane, Volume
-from medview.processing import mask_metrics, native_available
+from medview.processing import MaskHistory, mask_metrics, native_available
 from medview.ui.rendering import paint_mask, render_png
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -27,6 +27,8 @@ WEB = ROOT / "web"
 class Store:
     def __init__(self) -> None:
         self.volume: Volume | None = None
+        self.history = MaskHistory()
+        self.provenance: dict[str, object] = {"type": "manual-only", "clinical_model": False}
         self.lock = RLock()
 
     def require(self) -> Volume:
@@ -66,6 +68,7 @@ def status_payload(volume: Volume) -> dict[str, object]:
             "backend": metrics.backend,
         },
         "native_core": native_available(),
+        "history": {"can_undo": store.history.can_undo, "can_redo": store.history.can_redo},
     }
 
 
@@ -102,6 +105,8 @@ def load_demo() -> dict[str, object]:
         generate_synthetic_volume(path)
     with store.lock:
         store.volume = load_nifti(path)
+        store.history.reset()
+        store.provenance = {"type": "manual-only", "clinical_model": False}
         logger.info("volume_loaded source=synthetic shape=%s", store.volume.voxels.shape)
         return status_payload(store.volume)
 
@@ -111,6 +116,8 @@ async def load_nifti_upload(file: UploadFile = File(...)) -> dict[str, object]:
     content = await file.read(256 * 1024 * 1024 + 1)
     with store.lock:
         store.volume = load_uploaded_nifti(file.filename or "upload.nii", content)
+        store.history.reset()
+        store.provenance = {"type": "manual-only", "clinical_model": False}
         logger.info("volume_loaded source=nifti name=%s", store.volume.metadata.source_name)
         return status_payload(store.volume)
 
@@ -132,6 +139,8 @@ async def load_dicom_upload(files: list[UploadFile] = File(...)) -> dict[str, ob
             paths.append(path)
         with store.lock:
             store.volume = load_dicom_series(paths)
+            store.history.reset()
+            store.provenance = {"type": "manual-only", "clinical_model": False}
             logger.info("volume_loaded source=dicom slices=%d", len(paths))
             return status_payload(store.volume)
 
@@ -154,7 +163,13 @@ def infer() -> dict[str, object]:
     with store.lock:
         volume = store.require()
         provider = DeterministicThresholdSegmenter()
+        store.history.checkpoint(volume.mask, "inference", provider=provider.name)
         volume.mask = provider.predict(volume.voxels)
+        store.provenance = {
+            "provider": provider.name,
+            "type": "deterministic percentile threshold",
+            "clinical_model": False,
+        }
         logger.info("segmentation_completed provider=%s", provider.name)
         return {**status_payload(volume), "provider": provider.name, "clinical_model": False}
 
@@ -163,6 +178,14 @@ def infer() -> dict[str, object]:
 def paint(request: PaintRequest) -> dict[str, object]:
     with store.lock:
         volume = store.require()
+        store.history.checkpoint(
+            volume.mask,
+            "manual_edit",
+            plane=request.plane.value,
+            slice_index=request.index,
+            radius=request.radius,
+            value=request.value,
+        )
         try:
             paint_mask(
                 volume,
@@ -182,7 +205,30 @@ def paint(request: PaintRequest) -> dict[str, object]:
 def clear_mask() -> dict[str, object]:
     with store.lock:
         volume = store.require()
+        store.history.checkpoint(volume.mask, "clear_mask")
         volume.mask.fill(0)
+        return status_payload(volume)
+
+
+@app.post("/api/undo")
+def undo() -> dict[str, object]:
+    with store.lock:
+        volume = store.require()
+        restored = store.history.undo(volume.mask)
+        if restored is None:
+            raise HTTPException(409, "Nothing to undo")
+        volume.mask = restored
+        return status_payload(volume)
+
+
+@app.post("/api/redo")
+def redo() -> dict[str, object]:
+    with store.lock:
+        volume = store.require()
+        restored = store.history.redo(volume.mask)
+        if restored is None:
+            raise HTTPException(409, "Nothing to redo")
+        volume.mask = restored
         return status_payload(volume)
 
 
@@ -191,7 +237,13 @@ def export() -> StreamingResponse:
     with store.lock:
         volume = store.require()
         with tempfile.TemporaryDirectory(prefix="medview-export-") as directory:
-            mask_path, metadata_path = export_mask(volume, Path(directory))
+            store.history.record("export", format="nifti+json")
+            mask_path, metadata_path = export_mask(
+                volume,
+                Path(directory),
+                audit_events=store.history.events(),
+                provenance=store.provenance,
+            )
             archive = io.BytesIO()
             with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED) as bundle:
                 bundle.write(mask_path, mask_path.name)
