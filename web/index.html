@@ -19,14 +19,13 @@
         <figure data-plane="sagittal"><figcaption>SAGITTAL <span class="coord"></span></figcaption><div class="viewport"><img alt="Sagittal slice"><canvas></canvas><span class="orientation top">S</span><span class="orientation left">A</span></div><input class="slice" type="range" min="0" max="1"></figure>
         <figure data-plane="coronal"><figcaption>CORONAL <span class="coord"></span></figcaption><div class="viewport"><img alt="Coronal slice"><canvas></canvas><span class="orientation top">S</span><span class="orientation left">R</span></div><input class="slice" type="range" min="0" max="1"></figure>
       </div>
-      <footer>Wheel: slices · Drag: pan · Scroll/+/−: zoom · Edit mode: draw mask · Measure: drag ruler</footer>
+      <footer>Wheel: slices · Ctrl/⌘ + wheel: zoom · Drag: pan/edit/measure · Ctrl/⌘ + Z: undo · Shift + Ctrl/⌘ + Z: redo</footer>
     </section>
     <aside class="right panel">
-      <section><h2>SEGMENTATION</h2><button id="infer" class="primary" disabled>Run deterministic demo</button><div class="tools"><button data-mode="pan" class="active">Pan</button><button data-mode="paint">Paint</button><button data-mode="erase">Erase</button><button data-mode="measure">Measure</button></div><label>Brush radius <output id="brushOut">6</output> px<input id="brush" type="range" min="1" max="25" value="6"></label><button id="clear" disabled>Clear mask</button></section>
-      <section><h2>MASK METRICS <span class="cpp">C++ CORE</span></h2><dl><dt>Voxels</dt><dd id="voxels">—</dd><dt>Volume</dt><dd id="volume">—</dd><dt>Compute</dt><dd id="backend">—</dd></dl></section>
+      <section><h2>SEGMENTATION</h2><button id="infer" class="primary" disabled>Run deterministic demo</button><div class="tools"><button data-mode="pan" class="active">Pan</button><button data-mode="paint">Paint</button><button data-mode="erase">Erase</button><button data-mode="measure">Measure</button></div><div class="tools"><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button></div><label>Brush radius <output id="brushOut">6</output> px<input id="brush" type="range" min="1" max="25" value="6"></label><button id="clear" disabled>Clear mask</button></section>
+      <section><h2>MASK METRICS <span class="cpp">C++ CORE</span></h2><dl><dt>Voxels</dt><dd id="voxels">—</dd><dt>Volume</dt><dd id="volume">—</dd><dt>Compute</dt><dd id="backend">—</dd><dt>Provenance</dt><dd id="provenance">manual-only</dd></dl></section>
       <section><h2>MEASUREMENT</h2><div id="measurement" class="empty">Select Measure, then drag across a view.</div></section>
       <section><h2>EXPORT</h2><button id="export" disabled>Export NIfTI mask + JSON</button><p class="fine">Exports label data and traceable metadata. No source pixels are included.</p></section>
     </aside>
   </main><script src="/static/app.js"></script>
 </body></html>
-

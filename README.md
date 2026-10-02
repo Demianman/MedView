@@ -18,7 +18,7 @@ My earlier medical-imaging work was organized as independent projects: each proj
 
 MedView is the deliberate next step. Instead of another isolated model experiment, it focuses on the software around imaging AI: validated inputs, spatial metadata, tri-planar review, deterministic and pluggable inference, human correction, physical measurements, traceable export, and verification. The public website gives students, engineers, and reviewers a zero-install way to understand that workflow. The full repository remains the source of truth for the Python/C++ implementation.
 
-The hosted demo runs entirely in the browser using synthetic data. It demonstrates navigation, window/level, segmentation overlay, paint/erase correction, undo/redo, measurements, and metadata export with algorithm provenance and an action trail. DICOM/NIfTI file IO, the native C++ processing boundary, and NIfTI mask export run in the local application because those capabilities require the full backend and native build.
+The hosted demo runs entirely in the browser using synthetic data. It demonstrates navigation, window/level, segmentation overlay, paint/erase correction, live estimated metrics, undo/redo (including keyboard shortcuts), measurements, and metadata export with algorithm provenance and an action trail. DICOM/NIfTI file IO, exact native C++ mask metrics, and NIfTI mask export run in the local application because those capabilities require the full backend and native build.
 
 ### Public demo: 60-second workflow
 
@@ -38,6 +38,7 @@ The interface keeps later controls disabled until their prerequisite step is com
 - Teal segmentation overlay, deterministic percentile-based demo inference, brush-based paint/erase correction, and bounded undo/redo history
 - Interactive distance ruler and physical mask volume/bounds measurements
 - NIfTI label-map + JSON metadata export in a ZIP archive, including algorithm provenance and an in-session audit trail
+- Full-app undo/redo buttons and standard keyboard shortcuts (`Ctrl/⌘ Z`, `Shift + Ctrl/⌘ Z`), with state reported through the API
 - Explicit empty, loading, invalid-file, and success messages; structured server logs and user-safe errors
 - Deterministic synthetic CT-like phantom generator for a zero-sensitive-data demo
 
@@ -105,7 +106,7 @@ The suite includes:
 - C++ unit tests for thresholding, voxel counts, physical volume, bounds, empty/invalid inputs
 - Python unit tests for tri-planar transforms, rendering, mask painting/erasing, DICOM geometry reconstruction, history behavior, and validation failures
 - An integration test covering synthetic generation → load → native processing → NIfTI/JSON export, provenance/audit serialization, and data equality
-- API workflow tests covering empty/invalid states, slice rendering, inference, edit, undo/redo, and ZIP export
+- API workflow tests covering empty/invalid states, slice rendering, inference, edit, history-state transitions, undo/redo, and ZIP export
 - Ruff linting and strict mypy checks
 - GitHub Actions across macOS/Linux and Python 3.11/3.13
 

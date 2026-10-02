@@ -68,6 +68,7 @@ def status_payload(volume: Volume) -> dict[str, object]:
             "backend": metrics.backend,
         },
         "native_core": native_available(),
+        "provenance": store.provenance,
         "history": {"can_undo": store.history.can_undo, "can_redo": store.history.can_redo},
     }
 
@@ -198,7 +199,7 @@ def paint(request: PaintRequest) -> dict[str, object]:
             )
         except IndexError as exc:
             raise HTTPException(422, str(exc)) from exc
-        return status_payload(volume)["mask"]  # type: ignore[return-value]
+        return status_payload(volume)
 
 
 @app.post("/api/clear-mask")

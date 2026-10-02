@@ -28,8 +28,13 @@ def test_demo_inference_edit_export_flow():
         json={"plane": "axial", "index": 40, "u": 0.5, "v": 0.5, "radius": 3, "value": 0},
     )
     assert painted.status_code == 200
-    assert client.post("/api/undo").status_code == 200
-    assert client.post("/api/redo").status_code == 200
+    assert painted.json()["history"]["can_undo"] is True
+    undone = client.post("/api/undo")
+    assert undone.status_code == 200
+    assert undone.json()["history"]["can_redo"] is True
+    redone = client.post("/api/redo")
+    assert redone.status_code == 200
+    assert redone.json()["history"]["can_undo"] is True
     exported = client.get("/api/export")
     assert exported.status_code == 200
     assert exported.content.startswith(b"PK")
